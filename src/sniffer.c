@@ -801,7 +801,7 @@ int main(int argc, char **argv) {
     }
 
     if (interface == NULL && offline_file == NULL) {
-        printf("Error: interface and offline_file not specified\n");
+        printf("Error: interface or offline_file not specified\n");
         return 1;
     }
 
