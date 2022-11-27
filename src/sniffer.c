@@ -1,4 +1,4 @@
-#include "../include/analyseur.h"
+#include "../include/sniffer.h"
 
 long int counter;
 int verbose = 1;
@@ -275,9 +275,9 @@ void bootp_dhcp(const u_char *packet, int *offset) {
         printf("DHCP : ");
         while (packet[*offset] != 0xff) {
             uint8_t type = packet[*offset];
-            *offset++;
+            (*offset)++;
             uint8_t len = packet[*offset];
-            *offset++;
+            (*offset)++;
             if (verbose >= 2) {
                 switch (type) {
                 case 53:

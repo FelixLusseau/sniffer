@@ -4,7 +4,7 @@ LDLIBS ?=
 
 INCLUDE_PATH = ./include
 
-TARGET   = program
+TARGET   = sniffer
 
 SRCDIR   = src
 OBJDIR   = obj
@@ -24,9 +24,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(INCLUDES)
 	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
 
 
-.PHONY: clean cov
+.PHONY: clean
 clean:
 	rm -f $(OBJDIR)/*.o
-	rm -f $(OBJDIR)/*.gcda
-	rm -f $(OBJDIR)/*.gcno
 	rm -f $(BINDIR)/$(TARGET)
