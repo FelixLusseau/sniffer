@@ -1,12 +1,12 @@
 #ifndef ANALYSEUR_H
 #define ANALYSEUR_H
 
-#include "bootp.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <net/ethernet.h>
 #include <netinet/ether.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>

@@ -1,3 +1,8 @@
+#ifndef BOOTP_H
+#define BOOTP_H
+
+#include "sniffer.h"
+
 /* @(#) $Header: /cvs/Darwin/Commands/Other/tcpdump/tcpdump/bootp.h,v 1.1.1.1 2001/07/07 00:50:53
  * bbraun Exp $ (LBL) */
 /*
@@ -215,3 +220,7 @@ struct cmu_vend {
 
 /* v_flags values */
 #define VF_SMASK 1 /* Subnet mask field contains valid data */
+
+void bootp_dhcp(const u_char *packet, int *offset);
+
+#endif
