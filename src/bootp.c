@@ -6,7 +6,7 @@ void bootp_dhcp(const u_char *packet, int *offset) {
     printf(MAG "Bootp : ");
     struct bootp *bootp = (struct bootp *)(packet + *offset);
     *offset += sizeof(struct bootp) - 64; // -64 pour les vendors qui peuvent dépasser
-    if (verbose >= 2) {
+    if (verbose >= 3) {
         printf("op : %d, ", bootp->bp_op);
         printf("htype : %d, ", bootp->bp_htype);
         printf("hlen : %d, ", bootp->bp_hlen);
@@ -24,8 +24,7 @@ void bootp_dhcp(const u_char *packet, int *offset) {
         printf("\n");
     }
 
-    if (bootp->bp_vend[0] == 99 && bootp->bp_vend[1] == 130 && bootp->bp_vend[2] == 83 &&
-        bootp->bp_vend[3] == 99) {
+    if (bootp->bp_vend[0] == 99 && bootp->bp_vend[1] == 130 && bootp->bp_vend[2] == 83 && bootp->bp_vend[3] == 99) {
         *offset += 4;
         printf("DHCP : ");
         while (packet[*offset] != 0xff) {
@@ -39,8 +38,7 @@ void bootp_dhcp(const u_char *packet, int *offset) {
                     printf("type : %d, ", packet[*offset]);
                     break;
                 case 54:
-                    printf("server identifier : %s, ",
-                           inet_ntoa(*(struct in_addr *)&packet[*offset]));
+                    printf("server identifier : %s, ", inet_ntoa(*(struct in_addr *)&packet[*offset]));
                     break;
                 case 51:
                     printf("lease time : %u, ", *(uint32_t *)&packet[*offset]);
@@ -58,8 +56,7 @@ void bootp_dhcp(const u_char *packet, int *offset) {
                     printf("domain : %s, ", &packet[*offset]);
                     break;
                 case 28:
-                    printf("broadcast address : %s, ",
-                           inet_ntoa(*(struct in_addr *)&packet[*offset]));
+                    printf("broadcast address : %s, ", inet_ntoa(*(struct in_addr *)&packet[*offset]));
                     break;
                 case 50:
                     printf("requested IP : %s, ", inet_ntoa(*(struct in_addr *)&packet[*offset]));

@@ -10,9 +10,11 @@ void udp(const u_char *packet, int *offset, uint16_t *sport, uint16_t *dport) {
     *dport = ntohs(udp->dest);
     if (verbose >= 2) {
         printf("source port : %u, ", *sport);
-        printf("dest port : %u, ", *dport);
-        printf("len : %u, ", udp->len);
-        printf("check : %u\n", udp->check);
+        printf("dest port : %u", *dport);
     }
-    printf(reset);
+    if (verbose >= 3) {
+        printf(", len : %u, ", udp->len);
+        printf("check : %u", udp->check);
+    }
+    printf("\n" reset);
 }

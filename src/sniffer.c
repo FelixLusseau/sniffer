@@ -62,15 +62,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
         arp(packet, &offset);
         if (verbose == 1)
             printf("\n");
-        printf(
-            "\n------------------------------------------------------------------------------\n\n");
+        printf("\n------------------------------------------------------------------------------\n\n");
         return;
     case (ETHERTYPE_REVARP):
         printf(RED "RARP : \n" reset); // = ARP ?
         if (verbose == 1)
             printf("\n");
-        printf(
-            "\n------------------------------------------------------------------------------\n\n");
+        printf("\n------------------------------------------------------------------------------\n\n");
         return;
     case (ETHERTYPE_IPV6):
         ipv6(packet, &offset, &protocol, &length);
@@ -103,7 +101,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
         if (sport == 21 || dport == 21 || sport == 20 || dport == 20) {
             ftp(packet, &offset, &sport, &dport, &tcp_psh, &length);
         } else if (sport == 25 || dport == 25) {
-            smtp(packet, &offset, &tcp_psh /* , &length */);
+            smtp(packet, &offset, &tcp_psh, &length);
         } else if (sport == 22 || dport == 22) {
             printf(MAG "SSH :%s", sad);
             printf("\n" reset);
@@ -124,7 +122,6 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
         } else {
             printf(MAG "Unknown TCP service :'(\n" reset);
         }
-
         break;
     case 58:
         printf(BLU "ICMPv6 ");
@@ -178,10 +175,12 @@ int main(int argc, char **argv) {
             printf("Error: %s", errbuf);
             return 1;
         };
-        printf("### Interfaces : ###\n");
-        while (interfaces->next != NULL) {
-            printf("- %s, \n", interfaces->name);
-            interfaces = interfaces->next;
+        if (verbose >= 3) {
+            printf("### Interfaces : ###\n");
+            while (interfaces->next != NULL) {
+                printf("- %s, \n", interfaces->name);
+                interfaces = interfaces->next;
+            }
         }
     }
 
@@ -194,14 +193,15 @@ int main(int argc, char **argv) {
     bpf_u_int32 mask;
 
     if (interface) {
-
-        bpf_u_int32 netaddr;
-        if (pcap_lookupnet(interface, &netaddr, &mask, errbuf) == PCAP_ERROR) {
-            printf("Error: %s", errbuf);
-            return 1;
+        if (verbose >= 3) {
+            bpf_u_int32 netaddr;
+            if (pcap_lookupnet(interface, &netaddr, &mask, errbuf) == PCAP_ERROR) {
+                printf("Error: %s", errbuf);
+                return 1;
+            }
+            printf("\n%s : IP %s, ", interface, inet_ntoa(*(struct in_addr *)&netaddr));
+            printf("masque %s\n\n", inet_ntoa(*(struct in_addr *)&mask));
         }
-        printf("\n%s : IP %s, ", interface, inet_ntoa(*(struct in_addr *)&netaddr));
-        printf("masque %s\n\n", inet_ntoa(*(struct in_addr *)&mask));
 
         if ((capture = pcap_open_live(interface, BUFSIZ, 1, 1000, errbuf)) == NULL) {
             printf("Error: %s", errbuf);
@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
 
     if (filter) {
         struct bpf_program fp;
-        if (pcap_compile(capture, &fp, filter, 0, &mask) == PCAP_ERROR) {
+        if (pcap_compile(capture, &fp, filter, 0, mask) == PCAP_ERROR) {
             printf("Filter compile error: %s\n", errbuf);
             return 1;
         }
@@ -228,7 +228,8 @@ int main(int argc, char **argv) {
             printf("Filter setting error: %s\n", errbuf);
             return 1;
         }
-        printf("             ### Filter : %s ###\n\n", filter);
+        printf("Filter : ");
+        printf(CYN "%s\n\n" reset, filter);
     }
 
     if (pcap_loop(capture, -1, got_packet, NULL) == PCAP_ERROR) {
