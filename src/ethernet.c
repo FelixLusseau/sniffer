@@ -3,7 +3,7 @@
 extern int verbose;
 
 char *eth_type(uint16_t type) {
-    switch (htons(type)) {
+    switch (ntohs(type)) {
     case ETHERTYPE_ARP:
         return "ARP";
     case ETHERTYPE_IP:

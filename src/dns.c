@@ -77,7 +77,7 @@ void dns(const u_char *packet, int *offset) {
     int dns_start = *offset;
     *offset += sizeof(struct dnshdr);
     if (verbose >= 2) {
-        printf("id : %d, ", htons(dns->id));
+        printf("id : %d, ", ntohs(dns->id));
         printf("%s, ", dns->qr ? "response" : "query");
         if (verbose >= 3) {
             printf("opcode : %d, ", dns->op);
@@ -100,12 +100,12 @@ void dns(const u_char *packet, int *offset) {
             else if (dns->rcode == 5)
                 printf("refused, ");
         }
-        printf("qdcount : %d, ", htons(dns->qdcount));
-        uint16_t ancount = htons(dns->ancount);
+        printf("qdcount : %d, ", ntohs(dns->qdcount));
+        uint16_t ancount = ntohs(dns->ancount);
         printf("ancount : %d, ", ancount);
-        uint16_t nscount = htons(dns->nscount);
+        uint16_t nscount = ntohs(dns->nscount);
         printf("nscount : %d, ", nscount);
-        uint16_t arcount = htons(dns->arcount);
+        uint16_t arcount = ntohs(dns->arcount);
         printf("arcount : %d ", arcount);
 
         if (verbose >= 3) {

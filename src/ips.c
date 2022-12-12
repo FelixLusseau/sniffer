@@ -7,17 +7,17 @@ void ip(const u_char *packet, int *offset, u_int8_t *protocol, uint16_t *length)
     struct iphdr *ip = (struct iphdr *)(packet + *offset);
     *offset += sizeof(struct iphdr);
     *protocol = ip->protocol;
-    *length = htons(ip->tot_len) + sizeof(struct ether_header);
+    *length = ntohs(ip->tot_len) + sizeof(struct ether_header);
     if (verbose >= 3) {
         printf("version : %d, ", ip->version);
         printf("ihl : %d, ", ip->ihl);
         printf("tos : %d, ", ip->tos);
         printf("tot_len : %d, ", *length);
-        printf("id : %d, ", htons(ip->id));
+        printf("id : %d, ", ntohs(ip->id));
         printf("frag_off : %d, ", ip->frag_off);
         printf("ttl : %d, ", ip->ttl);
         printf("protocol : %d, ", *protocol);
-        printf("check : %d, ", htons(ip->check));
+        printf("check : %d, ", ntohs(ip->check));
     }
     if (verbose >= 2) {
         printf("source IP : %s, ", inet_ntoa(*(struct in_addr *)&ip->saddr));

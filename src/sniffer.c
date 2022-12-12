@@ -14,19 +14,6 @@
 long int counter;
 int verbose = 1;
 
-/* char *proto(uint8_t protocol) {
-    switch (protocol) {
-    case IPPROTO_TCP:
-        return "TCP";
-    case IPPROTO_UDP:
-        return "UDP";
-    case IPPROTO_ICMP:
-        return "ICMP";
-    default:
-        return "UNKNOWN";
-    }
-} */
-
 void headers(const struct pcap_pkthdr *header) {
     printf(YEL "Headers : ");
     time_t time = header->ts.tv_sec;
@@ -54,7 +41,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     uint16_t dport;
     uint16_t length;
 
-    switch (htons(ether_type)) {
+    switch (ntohs(ether_type)) {
     case (ETHERTYPE_IP):
         ip(packet, &offset, &protocol, &length);
         break;

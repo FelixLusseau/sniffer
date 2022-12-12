@@ -104,9 +104,7 @@ void telnet(const u_char *packet, int *offset, uint16_t *tcp_psh, uint16_t *leng
                 }
                 (*offset)++;
             } else {
-
-                printf(isprint(packet[*offset]) || packet[*offset] == '\n' ? "%c" : ".",
-                       packet[*offset]);
+                printf(isprint(packet[*offset]) || packet[*offset] == '\n' ? "%c" : ".", packet[*offset]);
                 (*offset)++;
                 if (*offset >= *length)
                     break;

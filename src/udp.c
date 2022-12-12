@@ -16,5 +16,6 @@ void udp(const u_char *packet, int *offset, uint16_t *sport, uint16_t *dport) {
         printf(", len : %u, ", udp->len);
         printf("check : %u", udp->check);
     }
-    printf("\n" reset);
+    if (verbose > 1)
+        printf("\n" reset);
 }
