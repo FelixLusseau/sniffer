@@ -247,5 +247,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    /* Close the capture if there is no CTRL+C to interrupt it */
+    pcap_close(capture);
+
     return 0;
 }

@@ -2,3 +2,5 @@ obj/
 bin/
 mail.txt
 notes.md
+test.*
+fonctions.sh
