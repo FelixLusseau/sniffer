@@ -27,6 +27,7 @@ void headers(const struct pcap_pkthdr *header) {
 }
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+    (void)args;
     char *sad = "         nothing to analyze :'(";
 
     printf("Packet %ld : \n", ++counter);
@@ -41,6 +42,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     uint16_t dport;
     uint16_t length;
 
+    /* Switch for the header under the ethernet one */
     switch (ntohs(ether_type)) {
     case (ETHERTYPE_IP):
         ip(packet, &offset, &protocol, &length);
@@ -52,7 +54,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
         printf("\n------------------------------------------------------------------------------\n\n");
         return;
     case (ETHERTYPE_REVARP):
-        printf(RED "RARP : \n" reset); // = ARP ?
+        printf(RED "RARP : \n" reset);
         if (verbose == 1)
             printf("\n");
         printf("\n------------------------------------------------------------------------------\n\n");
@@ -64,17 +66,20 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
         printf(RED "Unknown Protocol :'(\n" reset);
     }
 
+    /* Switch for the header under the IP one */
     switch (protocol) {
-    case 1:
+    case IPPROTO_ICMP:
         printf(BLU "ICMP ");
         printf("\n" reset);
         break;
-    case 17:
+    case IPPROTO_UDP:
         udp(packet, &offset, &sport, &dport);
 
+        /* Analyse of the ports to find the application */
         if (sport == 67 || sport == 68 || dport == 67 || dport == 68) {
             bootp_dhcp(packet, &offset);
         } else if (sport == 53 || dport == 53) {
+            printf(MAG "DNS : ");
             dns(packet, &offset);
         } else if (sport == 443 || dport == 443) {
             printf(MAG "HTTP/3 QUIC :%s\n" reset, sad);
@@ -82,9 +87,11 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
             printf(MAG "Unknown UDP service :'(\n" reset);
         }
         break;
-    case 6:
+    case IPPROTO_TCP:
         uint16_t tcp_psh;
         tcp(packet, &offset, &sport, &dport, &tcp_psh);
+
+        /* Analyse of the ports to find the application */
         if (sport == 21 || dport == 21 || sport == 20 || dport == 20) {
             ftp(packet, &offset, &sport, &dport, &tcp_psh, &length);
         } else if (sport == 25 || dport == 25) {
@@ -94,6 +101,14 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
             printf("\n" reset);
         } else if (sport == 23 || dport == 23) {
             telnet(packet, &offset, &tcp_psh, &length);
+        } else if (sport == 53 || dport == 53) {
+            uint16_t length = ntohs(*(uint16_t *)(packet + offset));
+            offset += 2;
+            printf(MAG "TCP DNS : %d bytes\n", length);
+            if (tcp_psh) {
+                dns(packet, &offset);
+            }
+            printf(reset);
         } else if (sport == 80 || dport == 80) {
             http(packet, &offset, &tcp_psh, &length);
         } else if (sport == 110 || dport == 110) {
@@ -110,7 +125,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
             printf(MAG "Unknown TCP service :'(\n" reset);
         }
         break;
-    case 58:
+    case IPPROTO_ICMPV6:
         printf(BLU "ICMPv6 ");
         printf("\n" reset);
         break;
@@ -125,8 +140,9 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 }
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        printf(RED "Usage: %s -i interface -f filter -o offline_file -v verbose\n" reset, argv[0]);
+    /* Verify the number of arguments given */
+    if (argc < 4) { // -vx == -v x
+        printf(RED "Usage: %s (-i interface | -o offline_file) -v verbose [-f filter]\n" reset, argv[0]);
         return 1;
     }
 
@@ -134,6 +150,7 @@ int main(int argc, char **argv) {
     char *interface = NULL;
     char *offline_file = NULL;
     char *filter = NULL;
+    /* Extracting the arguments from the command line */
     while ((c = getopt(argc, argv, "i:o:f:v:")) != -1) {
         switch (c) {
         case 'i':
@@ -149,20 +166,21 @@ int main(int argc, char **argv) {
             verbose = atoi(optarg);
             break;
         default:
-            printf("Usage: %s -i interface -f filter -o offline_file -v verbose\n", argv[0]);
+            printf(RED "Usage: %s (-i interface | -o offline_file) -v verbose [-f filter]\n" reset, argv[0]);
             return 1;
         }
     }
 
     char errbuf[PCAP_ERRBUF_SIZE];
 
-    if (interface) {
-        pcap_if_t *interfaces;
-        if (pcap_findalldevs(&interfaces, errbuf) == PCAP_ERROR) {
-            printf("Error: %s", errbuf);
-            return 1;
-        };
-        if (verbose >= 3) {
+    /* Scanning the internet interfaces of the system */
+    if (verbose >= 3) {
+        if (interface) {
+            pcap_if_t *interfaces;
+            if (pcap_findalldevs(&interfaces, errbuf) == PCAP_ERROR) {
+                printf("Error: %s", errbuf);
+                return 1;
+            };
             printf("### Interfaces : ###\n");
             while (interfaces->next != NULL) {
                 printf("- %s, \n", interfaces->name);
@@ -182,6 +200,7 @@ int main(int argc, char **argv) {
     if (interface) {
         if (verbose >= 3) {
             bpf_u_int32 netaddr;
+            /* Research for the interface IP address and netmask */
             if (pcap_lookupnet(interface, &netaddr, &mask, errbuf) == PCAP_ERROR) {
                 printf("Error: %s", errbuf);
                 return 1;
@@ -190,6 +209,7 @@ int main(int argc, char **argv) {
             printf("masque %s\n\n", inet_ntoa(*(struct in_addr *)&mask));
         }
 
+        /* Opening the interface for the capture */
         if ((capture = pcap_open_live(interface, BUFSIZ, 1, 1000, errbuf)) == NULL) {
             printf("Error: %s", errbuf);
             return 1;
@@ -198,17 +218,19 @@ int main(int argc, char **argv) {
     }
 
     if (offline_file) {
+        /* Opening the capture file for the capture */
         if ((capture = pcap_open_offline(offline_file, errbuf)) == NULL) {
             printf("Error: %s", errbuf);
             return 1;
         }
-        printf("\n             ### Capture on %s : ###\n\n", offline_file); // centrer ??
+        printf("\n             ### Capture on %s : ###\n\n", offline_file);
     }
 
+    /* Compiling and setting the filter */
     if (filter) {
         struct bpf_program fp;
         if (pcap_compile(capture, &fp, filter, 0, mask) == PCAP_ERROR) {
-            printf("Filter compile error: %s\n", errbuf);
+            pcap_perror(capture, filter);
             return 1;
         }
         if (pcap_setfilter(capture, &fp) == PCAP_ERROR) {
@@ -219,6 +241,7 @@ int main(int argc, char **argv) {
         printf(CYN "%s\n\n" reset, filter);
     }
 
+    /* Capture in loop and call the got_packet callback function to analyse the packet captured */
     if (pcap_loop(capture, -1, got_packet, NULL) == PCAP_ERROR) {
         printf("Error: %s", errbuf);
         return 1;

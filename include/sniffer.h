@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h> // write
 
 #define RED "\e[0;31m"
 #define GRN "\e[0;32m"
@@ -26,5 +25,21 @@
 #define reset "\e[0m"
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
+/**
+ * @brief Function to print the headers of the packet
+ *
+ * @param header
+ */
+void headers(const struct pcap_pkthdr *header);
+
+/**
+ * @brief Function that analyses the packet
+ *
+ * @param args
+ * @param header
+ * @param packet
+ */
+void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 #endif

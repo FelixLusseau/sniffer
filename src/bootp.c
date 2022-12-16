@@ -24,6 +24,7 @@ void bootp_dhcp(const u_char *packet, int *offset) {
         printf("\n");
     }
 
+    /* BOOTP options */
     if (bootp->bp_vend[0] == 99 && bootp->bp_vend[1] == 130 && bootp->bp_vend[2] == 83 && bootp->bp_vend[3] == 99) {
         *offset += 4;
         printf("DHCP : ");

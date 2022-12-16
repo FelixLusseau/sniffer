@@ -24,6 +24,8 @@ char *dns_type(uint16_t type) {
         return "SRV";
     case 41:
         return "OPT";
+    case 252:
+        return "AXFR";
     case 255:
         return "ANY";
     default:
@@ -67,12 +69,10 @@ void dns_pointer(const u_char *packet, int dns_offset, uint8_t pointer) {
         printf("%s", buf);
         pointer += dom_len;
         printf(".");
-        // printf("ok");
     }
 }
 
 void dns(const u_char *packet, int *offset) {
-    printf(MAG "DNS : ");
     struct dnshdr *dns = (struct dnshdr *)(packet + *offset);
     int dns_start = *offset;
     *offset += sizeof(struct dnshdr);
@@ -108,10 +108,14 @@ void dns(const u_char *packet, int *offset) {
         uint16_t arcount = ntohs(dns->arcount);
         printf("arcount : %d ", arcount);
 
+        if (verbose == 2)
+            printf("\n");
+
         if (verbose >= 3) {
             /* Question */
             uint8_t dom_len;
             printf("\n\nQuestion : \n");
+            /* Display the domain name (no compression in it for question) */
             while (packet[*offset] != 0x00) {
                 dom_len = packet[*offset];
                 (*offset)++;
@@ -145,19 +149,21 @@ void dns(const u_char *packet, int *offset) {
                 else if (r == ancount + nscount)
                     printf("\nAdditional Record(s) : \n");
 
-                if (packet[*offset] == 0xc0) {
+                /* Display the domain name */
+                if (packet[*offset] == 0xc0) { // If the first byte is 0xc0, it's a pointer to a previously seen domain name
                     uint8_t pointer = packet[*offset + 1];
                     *offset += 2;
-                    dns_pointer(packet, dns_start, pointer);
+                    dns_pointer(packet, dns_start, pointer); // Use a previously seen domain name part with it offset in the DNS layer
                 } else {
-                    if (packet[*offset] == 0x00) {
+                    if (packet[*offset] == 0x00) { // For OPT additional record
                         (*offset)++;
                     }
-                    while (packet[*offset] != 0x00) {
+                    while (packet[*offset] != 0x00) { // Display the domain name which can contain compressed parts
                         if (packet[*offset] == 0xc0) {
                             uint8_t pointer = packet[*offset + 1];
                             *offset += 2;
                             dns_pointer(packet, dns_start, pointer);
+                            break;
                         }
                         dom_len = packet[*offset];
                         (*offset)++;
@@ -173,7 +179,7 @@ void dns(const u_char *packet, int *offset) {
                         printf(".");
                     }
                 }
-                type = packet[*offset] << 8;
+                type = packet[*offset] << 8; // Read a 16 bits value
                 type += packet[*offset + 1];
                 *offset += 2;
                 class = packet[*offset] << 8;
@@ -191,6 +197,8 @@ void dns(const u_char *packet, int *offset) {
                 printf("  %d", ttl);
                 printf("\t%s\t%s ", dns_class(class), dns_type(type));
                 printf("\t");
+
+                /* Switch to choose which procedure to apply to display correctly the DNS record */
                 switch (type) {
                 case 1:
                     printf("%d.%d.%d.%d", packet[*offset], packet[*offset + 1], packet[*offset + 2], packet[*offset + 3]);
@@ -209,7 +217,6 @@ void dns(const u_char *packet, int *offset) {
                                 dns_pointer(packet, dns_start, pointer);
                             }
                             dom_len = packet[tmp_off];
-                            // printf("dl:%x", packet[tmp_off - 2]);
                             tmp_off++;
                             char buf[64] = {0};
                             int m;
@@ -221,10 +228,8 @@ void dns(const u_char *packet, int *offset) {
                             tmp_off += dom_len;
 
                             printf(".");
-                            // printf("'%x'", packet[tmp_off]);
                         }
                     }
-                    // printf("calc %d", tmp_off - *offset);
                     printf("  ");
                     int rname_start = tmp_off - *offset + 1;
                     for (int i = rname_start; i < rdlength - 5; i++) { // -5 for the 5 bytes of the SOA record
@@ -234,7 +239,7 @@ void dns(const u_char *packet, int *offset) {
                             dns_pointer(packet, dns_start, pointer);
                             i++;
                         } else {
-                            if (i == rname_start) // ne pas afficher un point au début
+                            if (i == rname_start) // To not print a dot before the name
                                 i++;
                             printf(isprint(packet[*offset + i]) ? "%c" : ".", packet[*offset + i]);
                         }
@@ -271,7 +276,7 @@ void dns(const u_char *packet, int *offset) {
                     tmp_off += 4;
                     printf("  %u", minimum);
                     break;
-                case 2:
+                case 2: // Same than type 12
                 case 5:
                 case 12:
                     for (int i = 0; i < rdlength; i++) {
@@ -281,7 +286,7 @@ void dns(const u_char *packet, int *offset) {
                             dns_pointer(packet, dns_start, pointer);
                             i++;
                         } else {
-                            if (i == 0) // ne pas afficher un point au début
+                            if (i == 0) // To not print a dot before the name
                                 i++;
                             printf(isprint(packet[*offset + i]) ? "%c" : ".", packet[*offset + i]);
                         }
@@ -320,7 +325,6 @@ void dns(const u_char *packet, int *offset) {
                     printf("%s", &packet[*offset]);
                     break;
                 }
-                // printf("rdlength : %d, ", rdlength);
                 *offset += rdlength;
                 printf("\n");
             }

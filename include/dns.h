@@ -20,12 +20,38 @@ struct dnshdr {
     uint16_t arcount;
 };
 
+/**
+ * @brief Function that traduces the type of the DNS header from a number to a string
+ *
+ * @param type
+ * @return char*
+ */
 char *dns_type(uint16_t type);
 
+/**
+ * @brief Function that traduces the class of the DNS header from a number to a string
+ *
+ * @param class
+ * @return
+ */
 char *dns_class(uint16_t class);
 
+/**
+ * @brief Function that is used to decompress the names in the DNS packet
+ * by following the pointers to already transferred names
+ *
+ * @param packet
+ * @param dns_offset
+ * @param pointer
+ */
 void dns_pointer(const u_char *packet, int dns_offset, uint8_t pointer);
 
+/**
+ * @brief Function that analyses the DNS application layer
+ *
+ * @param packet
+ * @param offset
+ */
 void dns(const u_char *packet, int *offset);
 
 #endif

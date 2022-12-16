@@ -1,10 +1,12 @@
 #include "telnet.h"
 
+extern int verbose;
+
 void telnet(const u_char *packet, int *offset, uint16_t *tcp_psh, uint16_t *length) {
     printf(MAG "Telnet : ");
-    if (*tcp_psh) {
+    if (*tcp_psh && verbose >= 2) {
         for (;;) {
-            if (packet[*offset] == 0xff) {
+            if (packet[*offset] == 0xff) { // Control sequence
                 printf("IAC ");
                 (*offset)++;
                 if (*offset >= *length)
