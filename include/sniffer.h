@@ -1,6 +1,7 @@
 #ifndef ANALYSEUR_H
 #define ANALYSEUR_H
 
+/* Includes useful for the project */
 #include <ctype.h>
 #include <getopt.h>
 #include <net/ethernet.h>
@@ -16,6 +17,7 @@
 #include <string.h>
 #include <time.h>
 
+/* Colors for the display */
 #define RED "\e[0;31m"
 #define GRN "\e[0;32m"
 #define YEL "\e[0;33m"

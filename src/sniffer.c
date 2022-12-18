@@ -13,6 +13,7 @@
 
 long int counter;
 int verbose = 1;
+uint16_t ftp_data_port = 0;
 
 void headers(const struct pcap_pkthdr *header) {
     printf(YEL "Headers : ");
@@ -28,7 +29,7 @@ void headers(const struct pcap_pkthdr *header) {
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)args;
-    char *sad = "         nothing to analyze :'(";
+    char *sad = "         nothing to analyse :'(";
 
     printf("Packet %ld : \n", ++counter);
     int offset = 0;
@@ -92,8 +93,8 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
         tcp(packet, &offset, &sport, &dport, &tcp_psh);
 
         /* Analyse of the ports to find the application */
-        if (sport == 21 || dport == 21 || sport == 20 || dport == 20) {
-            ftp(packet, &offset, &sport, &dport, &tcp_psh, &length);
+        if (sport == 21 || dport == 21 || sport == 20 || dport == 20 || (ftp_data_port && (sport == ftp_data_port || dport == ftp_data_port))) {
+            ftp(packet, &offset, &sport, &dport, &tcp_psh, &length, &ftp_data_port);
         } else if (sport == 25 || dport == 25) {
             smtp(packet, &offset, &tcp_psh, &length);
         } else if (sport == 22 || dport == 22) {

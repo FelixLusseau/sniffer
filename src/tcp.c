@@ -13,12 +13,12 @@ void tcp(const u_char *packet, int *offset, uint16_t *sport, uint16_t *dport, ui
     *tcp_psh = tcp->psh;
     if (verbose >= 2) {
         printf("source port : %d, ", *sport);
-        printf("dest port : %d", *dport);
+        printf("dest port : %d, ", *dport);
+        printf("seq : %u, ", tcp->seq);
+        printf("ack_seq : %u", tcp->ack_seq);
     }
     if (verbose >= 3) {
-        printf(", seq : %u, ", tcp->seq);
-        printf("ack_seq : %u, ", tcp->ack_seq);
-        printf("header len : %d, ", hdrlen);
+        printf(", header len : %d, ", hdrlen);
         printf("fin : %d, ", tcp->fin);
         printf("syn : %d, ", tcp->syn);
         printf("rst : %d, ", tcp->rst);
@@ -33,29 +33,26 @@ void tcp(const u_char *packet, int *offset, uint16_t *sport, uint16_t *dport, ui
             while (*offset < tcp_offset + hdrlen) {
                 uint8_t type = packet[*offset];
                 (*offset)++;
-                // uint8_t len = packet[*offset];
+                uint8_t len = packet[*offset];
                 (*offset)++;
                 if (type == 0x01) {
                     printf("nop, ");
                     (*offset)--;
+                    continue;
                 } else if (type == 0x02) {
                     printf("mss : %d, ", ntohs(*(uint16_t *)(packet + *offset)));
-                    (*offset) += 2;
                 } else if (type == 0x03) {
                     printf("window scale : %d, ", packet[*offset]);
-                    (*offset)++;
                 } else if (type == 0x04) {
                     printf("SACK permitted, ");
                 } else if (type == 0x05) {
                     printf("SACK, ");
-                    (*offset) += 2;
                 } else if (type == 0x08) {
                     printf("timestamp, ");
-                    (*offset) += 8;
                 } else if (type == 0x0a) {
                     printf("md5, ");
-                    (*offset) += 18;
                 }
+                *offset += len - 2;
             }
             printf("\e[2D ]");
         }

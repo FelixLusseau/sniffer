@@ -115,7 +115,7 @@ void dns(const u_char *packet, int *offset) {
             /* Question */
             uint8_t dom_len;
             printf("\n\nQuestion : \n");
-            /* Display the domain name (no compression in it for question) */
+            /* Display the domain name (no compression for question) */
             while (packet[*offset] != 0x00) {
                 dom_len = packet[*offset];
                 (*offset)++;
