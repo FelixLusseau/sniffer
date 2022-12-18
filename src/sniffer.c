@@ -20,9 +20,9 @@ void headers(const struct pcap_pkthdr *header) {
     time_t time = header->ts.tv_sec;
     char *time_str = ctime(&time);
     time_str[strlen(time_str) - 1] = '\0';
-    printf("time : %s, ", time_str);
+    printf("time : %s", time_str);
     if (verbose >= 2) {
-        printf("caplen : %d, len : %d\n", header->caplen, header->len);
+        printf(", caplen : %d, len : %d\n", header->caplen, header->len);
     }
     printf(reset);
 }
@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
         printf(CYN "%s\n\n" reset, filter);
     }
 
-    /* Capture in loop and call the got_packet callback function to analyse the packet captured */
+    /* Capture in loop and call the got_packet callback function to analyse the packets captured */
     if (pcap_loop(capture, -1, got_packet, NULL) == PCAP_ERROR) {
         printf("Error: %s", errbuf);
         return 1;
