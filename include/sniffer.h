@@ -26,8 +26,6 @@
 #define CYN "\e[0;36m"
 #define reset "\e[0m"
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-
 /**
  * @brief Function to print the headers of the packet
  *
